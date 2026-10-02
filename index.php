@@ -1,5 +1,26 @@
 <?php
 session_start();
+
+$env = require __DIR__ . '/loginenv.php';
+$pdo = new PDO(
+        "mysql:host={$env['db_host']};dbname={$env['db_name']};charset=utf8mb4",
+        $env['db_user'],
+        $env['db_password']
+);
+?>
+
+<?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['inputkey'] != "") {
+    $inputKey = $_POST['inputkey'];
+
+    $stmt = $pdo->prepare("INSERT INTO notepad (textData, createdDate, updateDate, username) VALUES (:textData, CURRENT_TIMESTAMP , CURRENT_TIMESTAMP, :name);");
+    $stmt->execute([':textData'=> $inputKey, ':name' => $_SESSION['username']]);
+
+    $_POST['inputkey'] = "";
+
+    header('Location: index.php');
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -47,39 +68,39 @@ session_start();
         exit;
     }
 
-$env = require __DIR__ . '/loginenv.php';
-$pdo = new PDO(
-        "mysql:host={$env['db_host']};dbname={$env['db_name']};charset=utf8mb4",
-        $env['db_user'],
-        $env['db_password']
-);
+    $stmt = $pdo->prepare("SELECT id,textData,createdDate FROM `notepad` where username = :name;");
+    $stmt->execute([':name' => $_SESSION['username']]);
 
-$stmt = $pdo->prepare("SELECT id,textData,createdDate FROM `notepad`;");
-$stmt->execute();
-
-$dbData = $stmt->fetchAll();
+    $dbData = $stmt->fetchAll();
 ?>
 
-<table>
-    <thead>
-        <tr>
-            <th scope="col">id</th>
-            <th scope="col">メモ内容</th>
-            <th scope="col">作成時間</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php
-            foreach ($dbData as $data) {
-                echo "<tr>";
-                echo "<th scope='row'>" . $data['id'] . "</th>";
-                echo "<th>" . $data['textData'] . "</th>";
-                echo "<th>" . $data['createdDate'] . "</th>";
-                echo "</tr>";
-            }
-        ?>
-    </tbody>
-</table>
+<div style="margin: 50px;">
+    <table style="margin-left: auto; margin-right: auto;">
+        <thead>
+            <tr>
+                <th scope="col">id</th>
+                <th scope="col">メモ内容</th>
+                <th scope="col">作成時間</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+                foreach ($dbData as $data) {
+                    echo "<tr>";
+                    echo "<th scope='row'>" . $data['id'] . "</th>";
+                    echo "<th>" . $data['textData'] . "</th>";
+                    echo "<th>" . $data['createdDate'] . "</th>";
+                    echo "</tr>";
+                }
+            ?>
+        </tbody>
+    </table>
 
+    <form style="display: flex;" action="" method="post">
+        <input style="margin-left: auto;" name="inputkey" type="text">
+        <button style="margin-right: auto;">作成</button>
+    </form>
+
+</div>
 
 </body>
