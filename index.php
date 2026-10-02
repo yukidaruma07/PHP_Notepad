@@ -42,4 +42,44 @@ session_start();
     </ul>
 </nav>
 
+<?php
+    if (!isset($_SESSION['type'])) {
+        exit;
+    }
+
+$env = require __DIR__ . '/loginenv.php';
+$pdo = new PDO(
+        "mysql:host={$env['db_host']};dbname={$env['db_name']};charset=utf8mb4",
+        $env['db_user'],
+        $env['db_password']
+);
+
+$stmt = $pdo->prepare("SELECT id,textData,createdDate FROM `notepad`;");
+$stmt->execute();
+
+$dbData = $stmt->fetchAll();
+?>
+
+<table>
+    <thead>
+        <tr>
+            <th scope="col">id</th>
+            <th scope="col">メモ内容</th>
+            <th scope="col">作成時間</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php
+            foreach ($dbData as $data) {
+                echo "<tr>";
+                echo "<th scope='row'>" . $data['id'] . "</th>";
+                echo "<th>" . $data['textData'] . "</th>";
+                echo "<th>" . $data['createdDate'] . "</th>";
+                echo "</tr>";
+            }
+        ?>
+    </tbody>
+</table>
+
+
 </body>
